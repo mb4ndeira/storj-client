@@ -1,0 +1,8 @@
+{
+  "name": "storj-client",
+  "version": "0.1.1",
+  "author": "mbandeira",
+  "license": "MIT",
+  "repository": "https://github.com/mb4ndeira/storj-client",
+  "main": "dist/index.js"
+}
