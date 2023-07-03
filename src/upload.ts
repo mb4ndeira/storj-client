@@ -1,23 +1,21 @@
-import { spawn } from "child_process";
 import internal from "stream";
+import fs from "fs";
 
-import logChildProcess from "./logChildProcess";
+import "./go-wasm/wasm_exec";
 
 const uploadFactory =
   (binPath: string, accessGrant: string) =>
-  (bucket: string, objectKey: string, stream: internal.Readable) =>
-    new Promise<void>((resolve, reject) => {
-      const uplink = spawn(binPath, ["upload", bucket, objectKey, accessGrant]);
+  async (bucket: string, objectKey: string, stream: internal.Readable) => {
+    const source = fs.readFileSync(binPath);
 
-      uplink.on("close", (code) => {
-        if (code !== 0) reject();
+    const go = new globalThis.Go();
 
-        resolve();
-      });
+    globalThis.uplinkArguments = ["upload", bucket, objectKey, accessGrant];
+    // globalThis.fileStream = stream;
 
-      logChildProcess(uplink, { processName: "uplink" });
-
-      stream.pipe(uplink.stdin);
-    });
+    WebAssembly.instantiate(new Uint8Array(source).buffer, go.importObject)
+      .then((result) => go.run(result.instance))
+      .catch((err) => console.error("Instantiation error:" + err));
+  };
 
 export { uploadFactory };

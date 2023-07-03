@@ -6,12 +6,26 @@ import (
 	"io"
 	"log"
 	"os"
+	"syscall/js"
 
 	"storj.io/uplink"
 )
 
-type Actions struct {
-	PipeData string
+func getArguments() []string {
+	uplinkArguments := js.Global().Get("uplinkArguments")
+	length := uplinkArguments.Length()
+
+	arguments := make([]string, length)
+
+	for i := 0; i < length; i++ {
+		arguments[i] = uplinkArguments.Index(i).String()
+	}
+
+	return arguments
+}
+
+func requestArgs() {
+	log.Fatalln("Error: arguments missing")
 }
 
 func upload(ctx context.Context, bucketName, objectKey string, accessGrant string, dataReader io.Reader) error {
@@ -26,7 +40,7 @@ func upload(ctx context.Context, bucketName, objectKey string, accessGrant strin
 	}
 	defer project.Close()
 
-	_, err = project.EnsureBucket(ctx, bucketName)
+	_, err = project.EnsureBucket(ctx, "demo-bucket")
 	if err != nil {
 		return fmt.Errorf("could not ensure bucket: %w", err)
 	}
@@ -50,12 +64,8 @@ func upload(ctx context.Context, bucketName, objectKey string, accessGrant strin
 	return nil
 }
 
-func requestArgs() {
-	log.Fatalln("Error: arguments missing")
-}
-
 func main() {
-	arguments := os.Args[1:]
+	var arguments []string = getArguments()
 
 	if len(arguments) == 0 {
 		requestArgs()
